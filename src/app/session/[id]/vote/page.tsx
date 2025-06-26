@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -15,7 +15,12 @@ type VoterTicket = {
 
 const VOTE_OPTIONS = [0, 0.5, 1, 2, 3, 5, 8, "?"];
 
-export default function VotingPage({ params }: { params: { id: string } }) {
+export default function VotingPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const [tickets, setTickets] = useState<VoterTicket[]>([]);
   const [myVotes, setMyVotes] = useState<Record<string, number>>({});
   const [participantId, setParticipantId] = useState<string | null>(null);
@@ -25,7 +30,7 @@ export default function VotingPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const pid = localStorage.getItem("participantId");
     if (!pid) {
-      router.push(`/session/${params.id}/join`);
+      router.push(`/session/${id}/join`);
       return;
     }
     setParticipantId(pid);
@@ -41,7 +46,7 @@ export default function VotingPage({ params }: { params: { id: string } }) {
           event: "*",
           schema: "public",
           table: "tickets",
-          filter: `session_id=eq.${params.id}`,
+          filter: `session_id=eq.${id}`,
         },
         () => loadTickets()
       )
@@ -50,7 +55,7 @@ export default function VotingPage({ params }: { params: { id: string } }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [params.id, router]);
+  }, [id, router]);
 
   const loadData = async () => {
     await Promise.all([loadTickets(), loadMyVotes()]);
@@ -60,7 +65,7 @@ export default function VotingPage({ params }: { params: { id: string } }) {
     const { data, error } = await supabase
       .from("tickets")
       .select("id, ticket_number, title, jira_link, total_votes")
-      .eq("session_id", params.id)
+      .eq("session_id", id)
       .order("created_at", { ascending: true });
 
     if (!error && data) {
