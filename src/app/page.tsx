@@ -15,7 +15,7 @@ export default function Home() {
 
     setIsCreating(true)
     try {
-      // Generate a unique user ID for the admin
+      // Generate a unique admin ID
       const adminId = crypto.randomUUID()
       
       // Create session
@@ -31,18 +31,22 @@ export default function Home() {
       if (sessionError) throw sessionError
 
       // Create admin participant
-      const { error: participantError } = await supabase
+      const { data: participant, error: participantError } = await supabase
         .from('participants')
         .insert({
           session_id: session.id,
           name: 'Admin',
           is_admin: true
         })
+        .select()
+        .single()
 
       if (participantError) throw participantError
 
-      // Store admin ID in localStorage
+      // Store both IDs in localStorage
       localStorage.setItem('adminId', adminId)
+      localStorage.setItem('participantId', participant.id)
+      localStorage.setItem(`session_${session.id}_admin`, adminId)
       
       router.push(`/session/${session.id}/admin`)
     } catch (error) {
