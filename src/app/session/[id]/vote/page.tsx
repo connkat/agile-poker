@@ -45,7 +45,7 @@ export default function VotingPage({
   const [session, setSession] = useState<Session | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [participants, setParticipants] = useState<SessionParticipant[]>([]);
-  const [myVotes, setMyVotes] = useState<Record<string, number>>({});
+  const [myVotes, setMyVotes] = useState<Record<string, number | null>>({});
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
   const [isSessionCreator, setIsSessionCreator] = useState(false);
@@ -152,7 +152,7 @@ export default function VotingPage({
       const votesMap = data.reduce((acc, vote) => {
         acc[vote.ticket_id] = vote.value;
         return acc;
-      }, {} as Record<string, number>);
+      }, {} as Record<string, number | null>);
       setMyVotes(votesMap);
     }
   };
@@ -234,16 +234,17 @@ export default function VotingPage({
   };
 
   const submitVote = async (ticketId: string, value: number | string) => {
-    if (!participantId || value === "?") return;
+    if (!participantId) return;
 
-    const numValue = typeof value === "number" ? value : 0;
+    // Handle "?" vote - save as null
+    const voteValue = value === "?" ? null : (typeof value === "number" ? value : 0);
 
     try {
       const { error } = await supabase.from("votes").upsert(
         {
           ticket_id: ticketId,
           participant_id: participantId,
-          value: numValue,
+          value: voteValue,
         },
         {
           onConflict: "ticket_id,participant_id",
@@ -252,7 +253,7 @@ export default function VotingPage({
 
       if (error) throw error;
 
-      setMyVotes({ ...myVotes, [ticketId]: numValue });
+      setMyVotes({ ...myVotes, [ticketId]: voteValue });
 
       // Auto-advance to next ticket
       if (currentTicketIndex < tickets.length - 1) {
@@ -636,11 +637,14 @@ export default function VotingPage({
               onClick={() => submitVote(currentTicket.id, value)}
               className={`
                 py-4 px-2 rounded-lg font-semibold text-lg transition-all
-                ${
-                  myVotes[currentTicket.id] === value
-                    ? "bg-blue-600 text-white shadow-lg scale-105"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }
+                              ${
+                (value === "?" && myVotes[currentTicket.id] === null) ||
+                (typeof value === "number" && myVotes[currentTicket.id] === value)
+                  ? value === "?"
+                    ? "bg-red-600 text-white shadow-lg scale-105"
+                    : "bg-blue-600 text-white shadow-lg scale-105"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+              }
               `}
             >
               {value}
@@ -672,7 +676,9 @@ export default function VotingPage({
                   index === currentTicketIndex
                     ? "bg-blue-600"
                     : myVotes[voterTickets[index].id] !== undefined
-                    ? "bg-green-500"
+                    ? myVotes[voterTickets[index].id] === null
+                      ? "bg-red-500"
+                      : "bg-green-500"
                     : "bg-gray-300"
                 }
               `}
@@ -714,12 +720,16 @@ export default function VotingPage({
               <span
                 className={`font-semibold ${
                   myVotes[ticket.id] !== undefined
-                    ? "text-green-600"
+                    ? myVotes[ticket.id] === null
+                      ? "text-red-600"
+                      : "text-green-600"
                     : "text-gray-400"
                 }`}
               >
                 {myVotes[ticket.id] !== undefined
-                  ? myVotes[ticket.id]
+                  ? myVotes[ticket.id] === null
+                    ? "?"
+                    : myVotes[ticket.id]
                   : "Not voted"}
               </span>
             </div>

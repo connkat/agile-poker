@@ -118,12 +118,12 @@ export default function ReviewPage({
     }
 
     if (!currentTickets.length) {
-      console.log("No tickets found for session");
+      // console.log("No tickets found for session");
       setAllVotes([]);
       return [];
     }
 
-    console.log("Loading votes for tickets:", currentTickets.map(t => t.id));
+    // console.log("Loading votes for tickets:", currentTickets.map(t => t.id));
 
     // First, get all votes for the session's tickets
     const { data: votes, error: votesError } = await supabase
@@ -137,7 +137,7 @@ export default function ReviewPage({
       return [];
     }
 
-    console.log("Found votes:", votes?.length || 0);
+    // console.log("Found votes:", votes?.length || 0);
 
     if (!votes || votes.length === 0) {
       setAllVotes([]);
@@ -174,7 +174,7 @@ export default function ReviewPage({
       participant: participantMap[vote.participant_id] || null
     }));
 
-    console.log("Votes with participants:", votesWithParticipants.length);
+    // console.log("Votes with participants:", votesWithParticipants.length);
     setAllVotes(votesWithParticipants);
     return votesWithParticipants;
   };
@@ -312,7 +312,7 @@ export default function ReviewPage({
           <div className="space-y-6">
             {tickets.map((ticket) => {
               const ticketVotes = getVotesForTicket(ticket.id);
-              const voteValues = ticketVotes.map(v => v.value);
+              const voteValues = ticketVotes.map(v => v.value).filter(v => v !== null) as number[];
               const median = calculateMedian(voteValues);
               
               return (
@@ -367,8 +367,10 @@ export default function ReviewPage({
                           <p className="font-semibold text-gray-900 text-sm mb-1">
                             {vote.participant?.user?.name || 'Unknown'}
                           </p>
-                          <p className="text-2xl font-bold text-blue-600">
-                            {vote.value}
+                          <p className={`text-2xl font-bold ${
+                            vote.value === null ? 'text-red-600' : 'text-blue-600'
+                          }`}>
+                            {vote.value === null ? '?' : vote.value}
                           </p>
                         </div>
                       ))}

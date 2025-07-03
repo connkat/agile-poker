@@ -17,7 +17,7 @@ export default function JoinSession({
 
     const joinSession = async () => {
       if (isJoining) {
-        console.log("Join already in progress, skipping...");
+        // console.log("Join already in progress, skipping...");
         return;
       }
 
@@ -30,7 +30,7 @@ export default function JoinSession({
       }
 
       isJoining = true;
-      console.log("Starting join process for user:", userId, "session:", id);
+      // console.log("Starting join process for user:", userId, "session:", id);
 
       try {
         // Check if session exists
@@ -47,7 +47,7 @@ export default function JoinSession({
           return;
         }
 
-        console.log("Session found:", session.name);
+        // console.log("Session found:", session.name);
 
         // Check if already a participant
         const { data: existingParticipants, error: checkError } = await supabase
@@ -61,15 +61,15 @@ export default function JoinSession({
           throw checkError;
         }
 
-        console.log("Existing participants found:", existingParticipants?.length || 0);
+        // console.log("Existing participants found:", existingParticipants?.length || 0);
 
         if (existingParticipants && existingParticipants.length > 0) {
           // Already joined, just update localStorage
-          console.log("Using existing participant:", existingParticipants[0].id);
+          // console.log("Using existing participant:", existingParticipants[0].id);
           localStorage.setItem("participantId", existingParticipants[0].id);
         } else {
           // Create participant with upsert to handle race conditions
-          console.log("Creating new participant...");
+          // console.log("Creating new participant...");
           const { data: participant, error } = await supabase
             .from("participants")
             .upsert({
@@ -86,7 +86,7 @@ export default function JoinSession({
             console.error("Error creating participant:", error);
             // If it's a duplicate key error, try to get the existing participant
             if (error.code === "23505") {
-              console.log("Duplicate key error, fetching existing participant...");
+              // console.log("Duplicate key error, fetching existing participant...");
               const { data: existingParticipant, error: fetchError } = await supabase
                 .from("participants")
                 .select("*")
@@ -99,19 +99,19 @@ export default function JoinSession({
                 throw error; // Throw original error if we can't fetch
               }
 
-              console.log("Found existing participant after duplicate error:", existingParticipant.id);
+              // console.log("Found existing participant after duplicate error:", existingParticipant.id);
               localStorage.setItem("participantId", existingParticipant.id);
             } else {
               throw error;
             }
           } else {
-            console.log("Created new participant:", participant.id);
+            // console.log("Created new participant:", participant.id);
             localStorage.setItem("participantId", participant.id);
           }
         }
 
         // Redirect to voting page
-        console.log("Redirecting to voting page...");
+        // console.log("Redirecting to voting page...");
         router.push(`/session/${id}/vote`);
       } catch (error: any) {
         console.error("Error joining session:", error);
