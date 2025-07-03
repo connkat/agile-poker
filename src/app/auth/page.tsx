@@ -17,7 +17,7 @@ export default function Auth() {
 
     // Validate email domain
     if (!email.endsWith("@metalab.com")) {
-      setError("Email must end with @metalab.com");
+      setError("Incorrect email domain");
       return;
     }
 
@@ -29,14 +29,19 @@ export default function Auth() {
     setIsLoading(true);
     try {
       // Check if user exists
-      const { data: existingUser } = await supabase
+      const { data: existingUsers, error: checkError } = await supabase
         .from("users")
         .select("*")
-        .eq("email", email)
-        .single();
+        .eq("email", email);
 
-      if (existingUser) {
+      if (checkError) {
+        console.error("Error checking existing user:", checkError);
+        throw checkError;
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
         // User exists, update name if different
+        const existingUser = existingUsers[0];
         if (existingUser.name !== name) {
           await supabase
             .from("users")
@@ -99,15 +104,12 @@ export default function Auth() {
               </label>
               <input
                 type="email"
-                placeholder="your.name@metalab.com"
+                placeholder="email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Must be a @metalab.com email
-              </p>
             </div>
 
             {error && <p className="text-sm text-red-600">{error}</p>}

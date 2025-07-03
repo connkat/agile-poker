@@ -16,6 +16,24 @@ type VoterTicket = {
 
 const VOTE_OPTIONS = [0, 0.5, 1, 2, 3, 5, 8, "?"];
 
+// Helper function to ensure URLs are absolute
+const ensureAbsoluteUrl = (url: string): string => {
+  if (!url) return url;
+  
+  // If it already has a protocol, return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // If it starts with www., add https://
+  if (url.startsWith('www.')) {
+    return `https://${url}`;
+  }
+  
+  // For other cases, add https://
+  return `https://${url}`;
+};
+
 export default function VotingPage({
   params,
 }: {
@@ -493,7 +511,7 @@ export default function VotingPage({
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">
                         {ticket.jira_link ? (
                           <a
-                            href={ticket.jira_link}
+                            href={ensureAbsoluteUrl(ticket.jira_link)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:underline"
@@ -586,7 +604,7 @@ export default function VotingPage({
           <p className="text-lg text-gray-700">{currentTicket.title}</p>
           {currentTicket.jira_link && (
             <a
-              href={currentTicket.jira_link}
+              href={ensureAbsoluteUrl(currentTicket.jira_link)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline mt-2 inline-block"

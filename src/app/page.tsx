@@ -35,6 +35,8 @@ export default function Home() {
         return;
       }
 
+      console.log("Creating session for user:", userId);
+
       // Create session
       const { data: session, error: sessionError } = await supabase
         .from("sessions")
@@ -46,6 +48,8 @@ export default function Home() {
         .single();
 
       if (sessionError) throw sessionError;
+
+      console.log("Session created:", session.id);
 
       // Create participant
       const { data: participant, error: participantError } = await supabase
@@ -61,6 +65,8 @@ export default function Home() {
         console.log("Detailed error:", participantError);
         throw participantError;
       }
+
+      console.log("Participant created:", participant.id);
 
       // Store session info
       localStorage.setItem("participantId", participant.id);

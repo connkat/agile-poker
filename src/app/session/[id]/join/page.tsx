@@ -13,7 +13,14 @@ export default function JoinSession({
   const router = useRouter();
 
   useEffect(() => {
+    let isJoining = false; // Prevent multiple simultaneous joins
+
     const joinSession = async () => {
+      if (isJoining) {
+        console.log("Join already in progress, skipping...");
+        return;
+      }
+
       const userId = localStorage.getItem("userId");
       const userName = localStorage.getItem("userName");
 
@@ -21,6 +28,9 @@ export default function JoinSession({
         router.push("/auth");
         return;
       }
+
+      isJoining = true;
+      console.log("Starting join process for user:", userId, "session:", id);
 
       try {
         // Check if session exists
@@ -37,34 +47,49 @@ export default function JoinSession({
           return;
         }
 
+        console.log("Session found:", session.name);
+
         // Check if already a participant
-        const { data: existingParticipant } = await supabase
-          .from("participants") // Use consistent table name
+        const { data: existingParticipants, error: checkError } = await supabase
+          .from("participants")
           .select("*")
           .eq("session_id", id)
-          .eq("user_id", userId)
-          .single();
+          .eq("user_id", userId);
 
-        if (existingParticipant) {
+        if (checkError) {
+          console.error("Error checking existing participant:", checkError);
+          throw checkError;
+        }
+
+        console.log("Existing participants found:", existingParticipants?.length || 0);
+
+        if (existingParticipants && existingParticipants.length > 0) {
           // Already joined, just update localStorage
-          localStorage.setItem("participantId", existingParticipant.id);
+          console.log("Using existing participant:", existingParticipants[0].id);
+          localStorage.setItem("participantId", existingParticipants[0].id);
         } else {
           // Create participant
+          console.log("Creating new participant...");
           const { data: participant, error } = await supabase
-            .from("participants") // Use consistent table name
+            .from("participants")
             .insert({
               session_id: id,
-              user_id: userId, // Use user_id, not name
+              user_id: userId,
             })
             .select()
             .single();
 
-          if (error) throw error;
+          if (error) {
+            console.error("Error creating participant:", error);
+            throw error;
+          }
 
+          console.log("Created new participant:", participant.id);
           localStorage.setItem("participantId", participant.id);
         }
 
         // Redirect to voting page
+        console.log("Redirecting to voting page...");
         router.push(`/session/${id}/vote`);
       } catch (error: any) {
         console.error("Error joining session:", error);
@@ -76,6 +101,8 @@ export default function JoinSession({
         });
         alert("Failed to join session");
         router.push("/");
+      } finally {
+        isJoining = false;
       }
     };
 

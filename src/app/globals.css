@@ -55,3 +55,35 @@ p {
 .text-gray-900 {
   color: #111827 !important;
 }
+
+/* Make input text darker and more visible */
+input, textarea, select {
+  color: #111827 !important; /* Very dark text */
+  font-weight: 500 !important; /* Slightly bolder */
+}
+
+/* Input placeholder text */
+input::placeholder, textarea::placeholder {
+  color: #6b7280 !important; /* Darker placeholder text */
+  font-weight: 400 !important;
+}
+
+/* Focus state for inputs */
+input:focus, textarea:focus, select:focus {
+  color: #111827 !important; /* Keep text dark when focused */
+}
+
+/* Override any Tailwind input styling */
+.border-gray-300 {
+  border-color: #d1d5db !important;
+}
+
+/* Ensure input text is always visible */
+input[type="text"], 
+input[type="email"], 
+input[type="number"], 
+input[type="password"],
+textarea {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
