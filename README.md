@@ -1,4 +1,4 @@
-# ML Agile Poker
+# ML Agile Poker DEMO
 
 ## Overview
 
