@@ -219,17 +219,40 @@ export default function VotingPage({
       return;
 
     try {
-      const { error } = await supabase
+      // Check current user and session info
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Current user:", user?.id);
+      console.log("Session ID:", id);
+      console.log("Is session creator:", isSessionCreator);
+      
+      // Get session details to verify created_by
+      const { data: sessionData } = await supabase
+        .from("sessions")
+        .select("created_by")
+        .eq("id", id)
+        .single();
+      
+      console.log("Session created_by:", sessionData?.created_by);
+      console.log("User matches creator:", user?.id === sessionData?.created_by);
+
+      console.log("Attempting to end session:", id);
+      const { data, error } = await supabase
         .from("sessions")
         .update({ is_active: false })
-        .eq("id", id);
+        .eq("id", id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log("Session update result:", data);
       alert("Session ended successfully");
       router.push("/");
     } catch (error) {
       console.error("Error ending session:", error);
-      alert("Failed to end session");
+      alert("Failed to end session: " + (error as Error).message);
     }
   };
 
@@ -298,12 +321,12 @@ export default function VotingPage({
               >
                 Hide Ticket Manager
               </button>
-              <button
+              {/* <button
                 onClick={endSession}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
                 End Session
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -433,12 +456,12 @@ export default function VotingPage({
               >
                 Review Votes
               </button>
-              <button
+              {/* <button
                 onClick={endSession}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
                 End Session
-              </button>
+              </button> */}
             </>
           )}
         </div>

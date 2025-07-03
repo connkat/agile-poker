@@ -215,17 +215,24 @@ export default function ReviewPage({
       return;
 
     try {
-      const { error } = await supabase
+      console.log("Attempting to end session:", id);
+      const { data, error } = await supabase
         .from("sessions")
         .update({ is_active: false })
-        .eq("id", id);
+        .eq("id", id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log("Session update result:", data);
       alert("Session ended successfully");
       router.push("/");
     } catch (error) {
       console.error("Error ending session:", error);
-      alert("Failed to end session");
+      alert("Failed to end session: " + (error as Error).message);
     }
   };
 
@@ -268,12 +275,12 @@ export default function ReviewPage({
           >
             Back to Voting
           </button>
-          <button
+          {/* <button
             onClick={endSession}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
           >
             End Session
-          </button>
+          </button> */}
         </div>
       </div>
 
