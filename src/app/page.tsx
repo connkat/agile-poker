@@ -162,12 +162,12 @@ export default function Home() {
               </div>
             )}
 
-            <button
+            {/* <button
               onClick={loadActiveSessions}
               className="mt-4 w-full text-sm text-blue-600 hover:text-blue-700"
             >
               Refresh list
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

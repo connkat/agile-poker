@@ -68,24 +68,46 @@ export default function JoinSession({
           console.log("Using existing participant:", existingParticipants[0].id);
           localStorage.setItem("participantId", existingParticipants[0].id);
         } else {
-          // Create participant
+          // Create participant with upsert to handle race conditions
           console.log("Creating new participant...");
           const { data: participant, error } = await supabase
             .from("participants")
-            .insert({
+            .upsert({
               session_id: id,
               user_id: userId,
+            }, {
+              onConflict: "session_id,user_id",
+              ignoreDuplicates: false
             })
             .select()
             .single();
 
           if (error) {
             console.error("Error creating participant:", error);
-            throw error;
-          }
+            // If it's a duplicate key error, try to get the existing participant
+            if (error.code === "23505") {
+              console.log("Duplicate key error, fetching existing participant...");
+              const { data: existingParticipant, error: fetchError } = await supabase
+                .from("participants")
+                .select("*")
+                .eq("session_id", id)
+                .eq("user_id", userId)
+                .single();
 
-          console.log("Created new participant:", participant.id);
-          localStorage.setItem("participantId", participant.id);
+              if (fetchError) {
+                console.error("Error fetching existing participant:", fetchError);
+                throw error; // Throw original error if we can't fetch
+              }
+
+              console.log("Found existing participant after duplicate error:", existingParticipant.id);
+              localStorage.setItem("participantId", existingParticipant.id);
+            } else {
+              throw error;
+            }
+          } else {
+            console.log("Created new participant:", participant.id);
+            localStorage.setItem("participantId", participant.id);
+          }
         }
 
         // Redirect to voting page

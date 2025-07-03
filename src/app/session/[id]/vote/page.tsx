@@ -34,6 +34,8 @@ const ensureAbsoluteUrl = (url: string): string => {
   return `https://${url}`;
 };
 
+
+
 export default function VotingPage({
   params,
 }: {
@@ -425,6 +427,12 @@ export default function VotingPage({
                 {showTicketManager ? "Hide" : "Manage"} Tickets
               </button>
               <button
+                onClick={() => router.push(`/session/${id}/review`)}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                Review Votes
+              </button>
+              <button
                 onClick={endSession}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
@@ -584,6 +592,8 @@ export default function VotingPage({
           </div>
         </div>
       )}
+
+
 
       {/* Progress Bar */}
       <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
