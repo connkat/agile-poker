@@ -24,3 +24,34 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Override light text colors with darker ones */
+.text-gray-600 {
+  color: #374151 !important; /* Darker gray */
+}
+
+.text-gray-500 {
+  color: #6b7280 !important; /* Darker gray */
+}
+
+.text-gray-400 {
+  color: #9ca3af !important; /* Darker gray */
+}
+
+/* Make sure all text is readable */
+h1, h2, h3, h4, h5, h6 {
+  color: #111827 !important; /* Very dark gray for headings */
+}
+
+p {
+  color: #374151 !important; /* Darker gray for paragraphs */
+}
+
+/* Override any light text in buttons or other elements */
+.text-gray-700 {
+  color: #374151 !important;
+}
+
+.text-gray-900 {
+  color: #111827 !important;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -10,94 +10,82 @@ export default function JoinSession({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [name, setName] = useState("");
-  const [isJoining, setIsJoining] = useState(false);
   const router = useRouter();
 
-  const handleJoin = async () => {
-    if (!name.trim()) return;
+  useEffect(() => {
+    const joinSession = async () => {
+      const userId = localStorage.getItem("userId");
+      const userName = localStorage.getItem("userName");
 
-    setIsJoining(true);
-    try {
-      // Check if session exists
-      const { data: session, error: sessionError } = await supabase
-        .from("sessions")
-        .select("*")
-        .eq("id", id)
-        .eq("is_active", true)
-        .single();
-
-      if (sessionError || !session) {
-        alert("Session not found or inactive");
+      if (!userId || !userName) {
+        router.push("/auth");
         return;
       }
 
-      // Create participant
-      const { data: participant, error } = await supabase
-        .from("participants")
-        .insert({
-          session_id: id,
-          name: name.trim(),
-          is_admin: false,
-        })
-        .select()
-        .single();
+      try {
+        // Check if session exists
+        const { data: session, error: sessionError } = await supabase
+          .from("sessions")
+          .select("*")
+          .eq("id", id)
+          .eq("is_active", true)
+          .single();
 
-      if (error) {
-        if (error.code === "23505") {
-          // Unique constraint violation
-          alert("This name is already taken in this session");
-        } else {
-          throw error;
+        if (sessionError || !session) {
+          alert("Session not found or inactive");
+          router.push("/");
+          return;
         }
-        return;
+
+        // Check if already a participant
+        const { data: existingParticipant } = await supabase
+          .from("participants") // Use consistent table name
+          .select("*")
+          .eq("session_id", id)
+          .eq("user_id", userId)
+          .single();
+
+        if (existingParticipant) {
+          // Already joined, just update localStorage
+          localStorage.setItem("participantId", existingParticipant.id);
+        } else {
+          // Create participant
+          const { data: participant, error } = await supabase
+            .from("participants") // Use consistent table name
+            .insert({
+              session_id: id,
+              user_id: userId, // Use user_id, not name
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          localStorage.setItem("participantId", participant.id);
+        }
+
+        // Redirect to voting page
+        router.push(`/session/${id}/vote`);
+      } catch (error: any) {
+        console.error("Error joining session:", error);
+        console.error("Error details:", {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        alert("Failed to join session");
+        router.push("/");
       }
+    };
 
-      // Store participant ID
-      localStorage.setItem("participantId", participant.id);
-
-      router.push(`/session/${id}/vote`);
-    } catch (error) {
-      console.error("Error joining session:", error);
-      alert("Failed to join session");
-    } finally {
-      setIsJoining(false);
-    }
-  };
+    joinSession();
+  }, [id, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="rounded-lg bg-white p-8 shadow">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            Join Session
-          </h1>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleJoin()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
-            </div>
-
-            <button
-              onClick={handleJoin}
-              disabled={isJoining || !name.trim()}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {isJoining ? "Joining..." : "Join Session"}
-            </button>
-          </div>
-        </div>
+      <div className="text-center">
+        <p className="text-gray-600">Joining session...</p>
       </div>
     </div>
   );
